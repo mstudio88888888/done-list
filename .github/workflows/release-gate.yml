@@ -52,7 +52,7 @@ jobs:
         env:
           DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
         run: |
-          pnpm --filter @workspace/db run push --accept-data-loss
+          pnpm --filter @workspace/db run push
           pnpm --filter @workspace/db run apply-account-rls
 
       # Detect whether Clerk credentials are present without exposing the value.
