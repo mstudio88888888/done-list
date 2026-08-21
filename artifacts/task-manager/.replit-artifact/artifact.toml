@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Task Manager"
+description = "A personal task manager where users can add tasks, mark them as completed, and track progress. Supports entering tasks that are already completed as well as pending ones."
+version = "1.0.0"
+id = "artifacts/task-manager"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 18810
+
+[services.development]
+run = "pnpm --filter @workspace/task-manager run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/task-manager", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/task-manager/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "18810"
+BASE_PATH = "/"
