@@ -51,6 +51,7 @@ jobs:
         if: steps.creds.outputs.present == 'true'
         working-directory: artifacts/api-server
         env:
+          CLERK_PUBLISHABLE_KEY: ${{ secrets.CLERK_PUBLISHABLE_KEY }}
           CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: pnpm run test:real-auth
