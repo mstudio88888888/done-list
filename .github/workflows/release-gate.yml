@@ -1,0 +1,58 @@
+name: Release gate
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  real-auth-account-isolation:
+    name: Real Clerk account isolation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # The script creates short-lived test sessions from this admin secret.
+      # Fork and untrusted pull requests do not receive this secret, so keep
+      # the real test skipped there; never substitute placeholder tokens.
+      - name: Run real Clerk account-isolation gate
+        if: ${{ secrets.CLERK_SECRET_KEY != '' }}
+        working-directory: artifacts/api-server
+        env:
+          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: pnpm run test:real-auth
+
+      # A required check that silently skips on main would allow a production
+      # release without an explicit security result. Pull requests remain safe
+      # without secrets, while production pushes and manual releases fail
+      # closed until the repository secret is configured.
+      - name: Block production release without Clerk credentials
+        if: ${{ github.event_name != 'pull_request' && secrets.CLERK_SECRET_KEY == '' }}
+        run: |
+          echo "::error::CLERK_SECRET_KEY is required for production release security validation."
+          exit 1
+
+      - name: Allow untrusted pull request without Clerk credentials
+        if: ${{ github.event_name == 'pull_request' && secrets.CLERK_SECRET_KEY == '' }}
+        run: echo "Skipping real Clerk account-isolation test because pull-request secrets are unavailable."
