@@ -1,0 +1,3 @@
+- [Clerk endpoint testing](clerk-endpoint-testing.md) — use an app-level user resolver seam to test account isolation without forging Clerk request internals.
+- [TSX invocation](tsx-invocation.md) — invoke the ESM entrypoint through Node, not the workspace shell wrapper.
+- [RLS migrations](rls-migrations.md) — apply account policies through explicit SQL after schema push and keep API roles non-privileged.
