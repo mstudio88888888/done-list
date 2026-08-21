@@ -1,0 +1,24 @@
+kind = "mobile"
+previewPath = "/notebook-mobile/"
+title = "Done List Notebook Mobile"
+description = "A native mobile notebook for personal productivity, with secure account sign-in and private Done List, Todo List, Diary, Routine, and Goals data."
+version = "1.0.0"
+id = "artifacts/notebook-mobile"
+router = "expo-domain"
+
+[[services]]
+name = "expo"
+ensurePreviewReachable = "/status"
+paths = [ "/notebook-mobile/" ]
+localPort = 18155
+
+[services.development]
+run = "pnpm --filter @workspace/notebook-mobile run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/notebook-mobile", "run", "build" ]
+run = [ "pnpm", "--filter", "@workspace/notebook-mobile", "run", "serve" ]
+
+[services.env]
+PORT = "18155"
+BASE_PATH = "/notebook-mobile/"
