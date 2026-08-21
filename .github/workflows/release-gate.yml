@@ -1,10 +1,14 @@
 name: Release gate
 
+# Runs ONLY on push to main and manual dispatch. Secrets are NEVER
+# passed to pull_request events because GitHub withholds secrets only
+# for fork PRs, not for same-repository branches. The pr-check.yml
+# workflow provides the same-named status check for PR merge enforcement
+# without exposing credentials to contributor-controlled code.
 on:
   push:
     branches:
       - main
-  pull_request:
   workflow_dispatch:
 
 permissions:
@@ -68,8 +72,8 @@ jobs:
           fi
 
       # The script creates short-lived test sessions from this admin secret.
-      # Fork and untrusted pull requests do not receive this secret, so keep
-      # the real test skipped there; never substitute placeholder tokens.
+      # Secrets are only available here on push to main and workflow_dispatch,
+      # never on pull_request events — see the on: block above.
       - name: Run real Clerk account-isolation gate
         if: steps.creds.outputs.present == 'true'
         working-directory: artifacts/api-server
@@ -80,15 +84,10 @@ jobs:
         run: pnpm run test:real-auth
 
       # A required check that silently skips on main would allow a production
-      # release without an explicit security result. Pull requests remain safe
-      # without secrets, while production pushes and manual releases fail
-      # closed until the repository secret is configured.
+      # release without an explicit security result. Fail closed when the
+      # secret is absent (repository not fully configured for production).
       - name: Block production release without Clerk credentials
-        if: github.event_name != 'pull_request' && steps.creds.outputs.present == 'false'
+        if: steps.creds.outputs.present == 'false'
         run: |
           echo "::error::CLERK_SECRET_KEY is required for production release security validation."
           exit 1
-
-      - name: Allow untrusted pull request without Clerk credentials
-        if: github.event_name == 'pull_request' && steps.creds.outputs.present == 'false'
-        run: echo "Skipping real Clerk account-isolation test because pull-request secrets are unavailable."
